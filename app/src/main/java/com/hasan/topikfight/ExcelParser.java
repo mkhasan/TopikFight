@@ -37,6 +37,8 @@ public class ExcelParser {
 
     int curRow;
     int curCol;
+
+    int listSize = 0;
     final String TAG = "ExcelParse";
 
     ExcelParser(String _filename) {
@@ -49,6 +51,9 @@ public class ExcelParser {
 
     LinkedList<WordPair> WordList(int index) {
         return wordList[index];
+    }
+    int ListSize() {
+        return listSize;
     }
 
     boolean Parse(){
@@ -160,6 +165,8 @@ public class ExcelParser {
                                 Log.e(TAG, "Excel file format error: index found in the map is too large");
                                 break;
                             }
+                            if (k > listSize-1)
+                                listSize = k+1;
 
 
                             wordList[k].add(new WordPair(curWordPair.eng, curWordPair.kor));
@@ -168,7 +175,7 @@ public class ExcelParser {
 
                             if (wordCols.size() > 0) {
                                 if (currPos == wordCols.size()-1 ) {
-                                    Log.e(TAG, "NEXT");
+                                    ;//Log.e(TAG, "NEXT");
                                 }
                                 currPos = (currPos + 1) % wordCols.size();
                                 //Log.e(TAG, "inc done");

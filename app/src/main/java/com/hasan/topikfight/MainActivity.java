@@ -15,9 +15,15 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.util.TypedValue;
+import android.view.MotionEvent;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
+import android.widget.Spinner;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFDateUtil;
@@ -42,15 +48,28 @@ import java.text.SimpleDateFormat;
 import java.util.Iterator;
 import java.util.LinkedList;
 
+import static java.lang.System.exit;
 
-public class MainActivity extends AppCompatActivity {
 
-    TextView txtView;
+public class MainActivity extends AppCompatActivity implements AdapterView.OnItemSelectedListener {
+
+    //TextView txtView;
     Button btnRead;
 
     final String TAG = "MainActivity";
 
     LinkedList<WordPair> wordList;
+
+    String listSelector[];
+
+    int curSel = 0;
+    int wordIndex = 0;
+    int listSize;
+    boolean showKorean;
+
+    ExcelParser excelParser;
+    TextView wordView;
+    TextView wordIndexView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,7 +80,27 @@ public class MainActivity extends AppCompatActivity {
         System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
         System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
 
-        txtView = findViewById(R.id.textView);
+        //txtView = findViewById(R.id.textView);
+        wordView = findViewById(R.id.word);
+        wordIndexView = findViewById(R.id.word_index);
+
+        excelParser = new ExcelParser(Environment.getExternalStorageDirectory()+"/Documents/Chuk_Chuk_TOPIK_Lists.xlsx");
+        excelParser.Parse();
+
+        listSize = excelParser.ListSize();
+        if (listSize < 1) {
+            exit(1);
+
+        }
+
+        listSelector = new String[listSize];
+        for (int k=0; k<listSize; k++) {
+            listSelector[k] = "Word List: " + (k+1);
+        }
+
+
+
+
         btnRead = findViewById(R.id.button);
 
         if (!checkPermissionForReadExtertalStorage()) {
@@ -73,28 +112,76 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
+
+
+        Spinner spinner = (Spinner) findViewById(R.id.list_spinner);
+// Create an ArrayAdapter using the string array and a default spinner layout
+        //ArrayAdapter<CharSequence> adapter = ArrayAdapter.createFromResource(this,
+          //      R.array.planets_array, android.R.layout.simple_spinner_item);
+        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this, android.R.layout.simple_spinner_item, listSelector);
+
+// Specify the layout to use when the list of choices appears
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+// Apply the adapter to the spinner
+        spinner.setAdapter(adapter);
+        spinner.setOnItemSelectedListener(this);
+
         btnRead.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 //readExcelFileFromAssets();
 
-                ExcelParser excelParser = new ExcelParser(Environment.getExternalStorageDirectory()+"/Documents/Chuk_Chuk_TOPIK_Lists.xlsx");
-                excelParser.Parse();
-
-                LinkedList<WordPair> currList = excelParser.WordList(5);
-
-                String msg = "";
-
-                Iterator<WordPair> it = currList.iterator();
-                while(it.hasNext()) {
-                    WordPair wordPair = it.next();
-                    msg += wordPair.eng + ":" + wordPair.kor + "\n";
-                }
-
-                Log.e(TAG, msg);
-
+                Fetch();
 
             }
+        });
+
+        findViewById(R.id.flip).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (showKorean)
+                    showKorean = false;
+                else
+                    showKorean = true;
+                UpdateView();
+            }
+        });
+
+        wordView.setOnTouchListener(new OnSwipeTouchListener() {
+            public void onSwipeTop() {
+                //Toast.makeText(MainActivity.this, "top", Toast.LENGTH_SHORT).show();
+            }
+            public void onSwipeRight() {
+                //Toast.makeText(MainActivity.this, "right", Toast.LENGTH_SHORT).show();
+                int k = excelParser.WordList(curSel).size();
+                wordIndex = (wordIndex+k-1) % k;
+                showKorean = true;
+                UpdateView();
+
+            }
+            public void onSwipeLeft() {
+                //Toast.makeText(MainActivity.this, "left", Toast.LENGTH_SHORT).show();
+                int k = excelParser.WordList(curSel).size();
+                wordIndex = (wordIndex+1) % k;
+                showKorean = true;
+                UpdateView();
+            }
+            public void onSwipeBottom() {
+                //Toast.makeText(MainActivity.this, "bottom", Toast.LENGTH_SHORT).show();
+
+            }
+
+            public boolean onTouch(View v, MotionEvent event) {
+                return gestureDetector.onTouchEvent(event);
+            }
+
+            public void doubleTapeHandler() {
+                Toast.makeText(MainActivity.this, "Reset", Toast.LENGTH_SHORT).show();
+                wordIndex = 0;
+                showKorean = true;
+                UpdateView();
+            }
+
         });
 
 
@@ -102,157 +189,45 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    public void readExcelFileFromAssets() {
-        try {
-            /*
-            InputStream myInput;
-            // initialize asset manager
-            AssetManager assetManager = getAssets();
-            //  open excel sheet
-            myInput = assetManager.open("myexcelsheet.xls");
-            // Create a POI File System object
-            POIFSFileSystem myFileSystem = new POIFSFileSystem(myInput);
-            // Create a workbook using the File System
-            HSSFWorkbook myWorkBook = new HSSFWorkbook(myFileSystem);
-            // Get the first sheet from workbook
-            HSSFSheet mySheet = myWorkBook.getSheetAt(0);
-            // We now need something to iterate through the cells.
-            Iterator<Row> rowIter = mySheet.rowIterator();
-            int rowno =0;
-            txtView.append("\n");
-            while (rowIter.hasNext()) {
-                Log.e("aaa", " row no "+ rowno );
-                HSSFRow myRow = (HSSFRow) rowIter.next();
-                if(rowno !=0) {
-                    Iterator<Cell> cellIter = myRow.cellIterator();
-                    int colNum =0;
-                    String sno="", date="", det="";
-                    while (cellIter.hasNext()) {
-                        HSSFCell myCell = (HSSFCell) cellIter.next();
-                        if (colNum==0){
-                            sno = myCell.toString();
-                        }else if (colNum==1){
-                            date = myCell.toString();
-                        }else if (colNum==2){
-                            det = myCell.toString();
-                        }
-                        colNum++;
-                        Log.e("aaa", " Index :" + myCell.getColumnIndex() + " -- " + myCell.toString());
-                    }
-                    txtView.append( sno + " -- "+ date+ "  -- "+ det+"\n");
-                }
-                rowno++;
+    public void onItemSelected(AdapterView<?> parent, View view,
+                               int pos, long id) {
+        // An item was selected. You can retrieve the selected item using
+        // parent.getItemAtPosition(pos)
+        Log.e(TAG, "Selected " + id + " pos is " + pos);
+        curSel = pos;
+        wordIndex = 0;
+        showKorean = true;
+        UpdateView();
+    }
 
+    public void onNothingSelected(AdapterView<?> parent) {
+        // Another interface callback
+        Log.e(TAG, "Nothing");
+    }
 
-            }
-            */
+    public void UpdateView() {
+        LinkedList<WordPair> list = excelParser.WordList(curSel);
+        //String kor = list[wordIndex].
 
-            File myFile = new File(Environment.getExternalStorageDirectory()+"/Documents/Chuk_Chuk_TOPIK_-Lists.xlsx");
+        WordPair wordPair = list.get(wordIndex);
 
-
-            FileInputStream fis = new FileInputStream(myFile);
-
-// Finds the workbook instance for XLSX file
-            XSSFWorkbook myWorkBook = new XSSFWorkbook (fis);
-// Return first sheet from the XLSX workbook
-            XSSFSheet mySheet = myWorkBook.getSheetAt(0);
-
-
-            int rowsCount = mySheet.getPhysicalNumberOfRows();
-            Log.e("Rows", "rows count " + rowsCount);
-
-            FormulaEvaluator formulaEvaluator = myWorkBook.getCreationHelper().createFormulaEvaluator();
-            for (int r = 0; r<rowsCount; r++) {
-                Row row = mySheet.getRow(r);
-                int cellsCount = row.getPhysicalNumberOfCells();
-                if (r < 0)
-                    Log.e("Cols", "ros pos " + r + " cols count" + cellsCount);
-
-                for (int c = 0; c<cellsCount; c++) {
-                    String value = getCellAsString(row, c, formulaEvaluator);
-                    String cellInfo = "r:"+r+"; c:"+c+"; v:"+value;
-                    //printlnToUser(cellInfo);
-                    if (r < 10)
-                        Log.e("TAG", "rows " + r + " cell " + c + " cellInfo " + cellInfo);
-                }
-
-
-            }
-
-
-
-// Get iterator to all the rows in current sheet
-            /*
-            Iterator rowIterator = mySheet.iterator();
-// Traversing over each row of XLSX file
-            int rowsCount = mySheet.getPhysicalNumberOfRows();
-            for (int r=0; r<rowsCount; r++)
-            {
-                Row row =
-// For each row, iterate through each columns
-                Iterator cellIterator = row.cellIterator();
-                while (cellIterator.hasNext()) {
-                    Cell cell = cellIterator.next();
-                    switch (cell.getCellType()) { case Cell.CELL_TYPE_STRING: System.out.print(cell.getStringCellValue() + “\t”);
-                        break; case Cell.CELL_TYPE_NUMERIC:System.out.print(cell.getNumericCellValue() + “\t”);
-                        break; case Cell.CELL_TYPE_BOOLEAN: System.out.print(cell.getBooleanCellValue() + “\t”);
-                        break; default : }
-                }
-                System.out.println(“”);
-            }
-
-
-             */
-
-        } catch (Exception e) {
-
-
-            Log.e("aaa", "error " + Environment.getExternalStorageDirectory()+ " " + e.toString());
+        if (wordPair == null) {
+            Log.e(TAG, "Format error");
+            exit(1);
         }
-    }
-    private void printlnToUser(String str) {
-        final String string = str;
 
-        Log.d("Error", "someOtherMethod()");
+        wordIndexView.setText(Integer.toString(wordIndex+1));
 
-
-
-    }
-
-    protected String getCellAsString(Row row, int c, FormulaEvaluator formulaEvaluator) {
-        String value = "";
-        try {
-            Cell cell = row.getCell(c);
-            CellValue cellValue = formulaEvaluator.evaluate(cell);
-            switch (cellValue.getCellType()) {
-                case Cell.CELL_TYPE_BOOLEAN:
-                    value = ""+cellValue.getBooleanValue();
-                    break;
-                case Cell.CELL_TYPE_NUMERIC:
-                    double numericValue = cellValue.getNumberValue();
-                    if(HSSFDateUtil.isCellDateFormatted(cell)) {
-                        double date = cellValue.getNumberValue();
-                        SimpleDateFormat formatter =
-                                new SimpleDateFormat("dd/MM/yy");
-                        value = formatter.format(HSSFDateUtil.getJavaDate(date));
-                    } else {
-                        value = ""+numericValue;
-                    }
-                    break;
-                case Cell.CELL_TYPE_STRING:
-                    value = ""+cellValue.getStringValue();
-                    break;
-                default:
-            }
-        } catch (NullPointerException e) {
-            /* proper error handling should be here */
-            printlnToUser(e.toString());
+        if (showKorean) {
+            wordView.setTextSize(TypedValue.COMPLEX_UNIT_SP,75);
+            wordView.setText(wordPair.kor);
         }
-        return value;
-    }
+        else {
+            wordView.setTextSize(TypedValue.COMPLEX_UNIT_SP,25);
+            wordView.setText(wordPair.eng);
+        }
 
-    public String getDataDir(final Context context) throws Exception {
-        return context.getPackageManager().getPackageInfo(context.getPackageName(), 0).applicationInfo.dataDir;
+        //msg += wordPair.eng + ":" + wordPair.kor + "\n";
     }
 
     public boolean checkPermissionForReadExtertalStorage() {
@@ -269,5 +244,24 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
             throw e;
         }
+    }
+
+    public void Fetch() {
+        ExcelParser excelParser = new ExcelParser(Environment.getExternalStorageDirectory()+"/Documents/Chuk_Chuk_TOPIK_Lists.xlsx");
+        excelParser.Parse();
+
+        LinkedList<WordPair> currList = excelParser.WordList(5);
+
+        Log.e(TAG, "size of list is: " + excelParser.ListSize());
+        String msg = "";
+
+        Iterator<WordPair> it = currList.iterator();
+        while(it.hasNext()) {
+            WordPair wordPair = it.next();
+            msg += wordPair.eng + ":" + wordPair.kor + "\n";
+        }
+
+        Log.e(TAG, msg);
+
     }
 }
