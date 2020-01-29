@@ -48,7 +48,7 @@ public class MainActivity extends AppCompatActivity {
     TextView txtView;
     Button btnRead;
 
-
+    final String TAG = "MainActivity";
 
     LinkedList<WordPair> wordList;
 
@@ -76,7 +76,24 @@ public class MainActivity extends AppCompatActivity {
         btnRead.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                readExcelFileFromAssets();
+                //readExcelFileFromAssets();
+
+                ExcelParser excelParser = new ExcelParser(Environment.getExternalStorageDirectory()+"/Documents/Chuk_Chuk_TOPIK_Lists.xlsx");
+                excelParser.Parse();
+
+                LinkedList<WordPair> currList = excelParser.WordList(5);
+
+                String msg = "";
+
+                Iterator<WordPair> it = currList.iterator();
+                while(it.hasNext()) {
+                    WordPair wordPair = it.next();
+                    msg += wordPair.eng + ":" + wordPair.kor + "\n";
+                }
+
+                Log.e(TAG, msg);
+
+
             }
         });
 
@@ -130,7 +147,7 @@ public class MainActivity extends AppCompatActivity {
             }
             */
 
-            File myFile = new File(Environment.getExternalStorageDirectory()+"/Documents/TOPIK_Lists.xlsx");
+            File myFile = new File(Environment.getExternalStorageDirectory()+"/Documents/Chuk_Chuk_TOPIK_-Lists.xlsx");
 
 
             FileInputStream fis = new FileInputStream(myFile);
