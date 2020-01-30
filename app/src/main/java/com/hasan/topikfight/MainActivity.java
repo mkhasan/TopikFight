@@ -80,6 +80,15 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
         System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
 
+        if (!checkPermissionForReadExtertalStorage()) {
+            try {
+                requestPermissionForReadExtertalStorage();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Log.e("eRROR", "ERROR");
+            }
+        }
+
         //txtView = findViewById(R.id.textView);
         wordView = findViewById(R.id.word);
         wordIndexView = findViewById(R.id.word_index);
@@ -103,14 +112,6 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
 
         btnRead = findViewById(R.id.button);
 
-        if (!checkPermissionForReadExtertalStorage()) {
-            try {
-                requestPermissionForReadExtertalStorage();
-            } catch (Exception e) {
-                e.printStackTrace();
-                Log.e("eRROR", "ERROR");
-            }
-        }
 
 
 
@@ -139,15 +140,11 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         findViewById(R.id.flip).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (showKorean)
-                    showKorean = false;
-                else
-                    showKorean = true;
-                UpdateView();
+                Flip();
             }
         });
 
-        wordView.setOnTouchListener(new OnSwipeTouchListener() {
+        findViewById(R.id.control).setOnTouchListener(new OnSwipeTouchListener() {
             public void onSwipeTop() {
                 //Toast.makeText(MainActivity.this, "top", Toast.LENGTH_SHORT).show();
             }
@@ -182,11 +179,23 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
                 UpdateView();
             }
 
+            public void singleTapHandler() {
+                Flip();
+            }
+
         });
 
 
 
 
+    }
+
+    public void Flip() {
+        if (showKorean)
+            showKorean = false;
+        else
+            showKorean = true;
+        UpdateView();
     }
 
     public void onItemSelected(AdapterView<?> parent, View view,

@@ -27,6 +27,7 @@ public class OnSwipeTouchListener implements View.OnTouchListener {
         @Override
         public boolean onSingleTapConfirmed(MotionEvent e) {
             Log.i(TAG, "[CALLBACK_GL] boolean onSingleTapConfirmed(e:" + e + ")");
+            singleTapHandler();
             return super.onSingleTapConfirmed(e);
         }
 
@@ -75,6 +76,10 @@ public class OnSwipeTouchListener implements View.OnTouchListener {
     }
 
     public void doubleTapeHandler() {
+    }
+
+    public void singleTapHandler() {
+
     }
 
 }
