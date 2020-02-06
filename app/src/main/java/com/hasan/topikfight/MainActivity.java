@@ -8,6 +8,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
 import android.content.ContextWrapper;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.content.res.AssetManager;
 
@@ -57,6 +58,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
     Button btnRead;
 
     final String TAG = "MainActivity";
+    public static final String PREFERENCES_FILE_NAME = "MyAppPreferences";
 
     LinkedList<WordPair> wordList;
 
@@ -79,6 +81,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         System.setProperty("org.apache.poi.javax.xml.stream.XMLInputFactory", "com.fasterxml.aalto.stax.InputFactoryImpl");
         System.setProperty("org.apache.poi.javax.xml.stream.XMLOutputFactory", "com.fasterxml.aalto.stax.OutputFactoryImpl");
         System.setProperty("org.apache.poi.javax.xml.stream.XMLEventFactory", "com.fasterxml.aalto.stax.EventFactoryImpl");
+
+
+        SharedPreferences mysettings= getSharedPreferences(PREFERENCES_FILE_NAME, 0);
 
         if (!checkPermissionForReadExtertalStorage()) {
             try {
@@ -127,6 +132,9 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         spinner.setAdapter(adapter);
         spinner.setOnItemSelectedListener(this);
 
+        int prevSel = mysettings.getInt("curSel", 0);
+        spinner.setSelection(prevSel);
+
         btnRead.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -144,14 +152,14 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             }
         });
 
-        findViewById(R.id.control).setOnTouchListener(new OnSwipeTouchListener() {
+        findViewById(R.id.swipe_area).setOnTouchListener(new OnSwipeTouchListener() {
             public void onSwipeTop() {
                 //Toast.makeText(MainActivity.this, "top", Toast.LENGTH_SHORT).show();
             }
             public void onSwipeRight() {
                 //Toast.makeText(MainActivity.this, "right", Toast.LENGTH_SHORT).show();
                 int k = excelParser.WordList(curSel).size();
-                wordIndex = (wordIndex+k-1) % k;
+                wordIndex = (wordIndex+1) % k;
                 showKorean = true;
                 UpdateView();
 
@@ -159,7 +167,7 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
             public void onSwipeLeft() {
                 //Toast.makeText(MainActivity.this, "left", Toast.LENGTH_SHORT).show();
                 int k = excelParser.WordList(curSel).size();
-                wordIndex = (wordIndex+1) % k;
+                wordIndex = (wordIndex+k-1) % k;
                 showKorean = true;
                 UpdateView();
             }
@@ -271,6 +279,33 @@ public class MainActivity extends AppCompatActivity implements AdapterView.OnIte
         }
 
         Log.e(TAG, msg);
+
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle savedInstanceState) {
+        super.onSaveInstanceState(savedInstanceState);
+
+    }
+
+    @Override
+    protected void onPause() {
+
+        // Save UI state changes to the savedInstanceState.
+        // This bundle will be passed to onCreate if the process is
+        // killed and restarted.
+
+        SharedPreferences settingsfile= getSharedPreferences(PREFERENCES_FILE_NAME,0);
+        SharedPreferences.Editor myeditor = settingsfile.edit();
+        //savedInstanceState.putBoolean("MyBoolean", true);
+        //savedInstanceState.putDouble("myDouble", 1.9);
+        myeditor.putInt("curSel", curSel);
+        myeditor.apply();
+        //savedInstanceState.putString("MyString", "Welcome back to Android");
+        // etc.
+        Log.e(TAG, "onPause() " + curSel);
+        super.onPause();
+
 
     }
 }

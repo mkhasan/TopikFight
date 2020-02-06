@@ -11,7 +11,7 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="50dp">
+        android:layout_marginTop="50dp">
 
 
         <LinearLayout
@@ -54,9 +54,11 @@
 
             </LinearLayout>
             <RelativeLayout
+                android:id="@+id/swipe_area"
                 android:layout_width="match_parent"
-                android:layout_height="200dp"
-                android:layout_marginTop="120dp">
+                android:layout_height="350dp"
+                android:layout_marginTop="0dp"
+                android:layout_marginBottom="0dp">
                 <TextView
                     android:id="@+id/word"
                     android:layout_width="match_parent"
@@ -65,7 +67,7 @@
                     android:textSize="25sp"
                     android:textAlignment="center"
                     android:layout_margin="50dp"
-                    android:layout_centerVertical="true"/>
+                    android:layout_centerVertical="true" />
 
 
             </RelativeLayout>
@@ -79,7 +81,8 @@
 
     <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:visibility="gone">
 
         <Button
             android:id="@+id/button"
@@ -109,6 +112,7 @@
             android:id="@+id/control"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
             android:src="@drawable/ehan"/>
 
 
